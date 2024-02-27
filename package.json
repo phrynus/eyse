@@ -1,0 +1,22 @@
+{
+    "name": "eyse",
+    "version": "1.0.0",
+    "description": "",
+    "main": "bot.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "nodemon bot.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^1.6.7",
+        "body-parser": "^1.20.2",
+        "crypto": "^1.0.1",
+        "express": "^4.18.2",
+        "log4js": "^6.9.1",
+        "log4js-node-mongodb": "^2.2.1",
+        "mongoose": "^8.2.0"
+    }
+}
