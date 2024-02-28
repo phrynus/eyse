@@ -77,8 +77,9 @@ tv.post('/', async (req, res) => {
                 continue;
             }
             // 请求
-            const bin_result = await bin.newBin.req('POST', '/fapi/v1/order/test', bin_params, true).catch((err) => {
-                throw err;
+            const bin_result = await bin.newBin.req('POST', '/fapi/v1/order', bin_params, true).catch((err) => {
+                status = 300;
+                return err;
             });
             // 更新数据
             newTvModel.bin_params = bin_params || err || {};
@@ -107,6 +108,7 @@ tv.post('/custom', async (req, res) => {
         let status = 200;
 
         for (const token of tokens) {
+            console.log(token);
             // 获取交易所
             const bin = config.key[token];
             if (bin === undefined) {
@@ -116,7 +118,8 @@ tv.post('/custom', async (req, res) => {
                 continue;
             }
             const result = await bin.newBin.req(model, url, params, isPrivate == 'true' ? true : false).catch((err) => {
-                throw err;
+                status = 300;
+                return err;
             });
             results.push(result);
         }
