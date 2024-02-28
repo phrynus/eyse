@@ -4,7 +4,8 @@
 
 ```npm
 npm install -g pm2
-pm2 start bpt.js
+pnpm i
+pm2 start bot.js
 ```
 
 #### 功能
