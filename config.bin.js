@@ -3,15 +3,15 @@ module.exports = {
         name: 'EYSE',
     },
     // 必持仓币种
-    safePositionSymbol: [
-        'BTCUSDT',
-        'ETHUSDT',
-        // 'BNBUSDT'
-    ],
+    safePositionSymbol: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'],
     // 必币种数量
     safePositionNum: 10,
     //
     safeRepeatList: [],
+    // 调整为满仓
+    safeFullWarehouse: true,
+    // 调整成双向
+    safeDouble: true,
     key: [
         {
             name: '',
@@ -50,8 +50,9 @@ module.exports = {
             // 交易类型
             action: '{{strategy.order.action}}', //{{strategy.order.action}} - 为执行的订单返回字符串“buy”或“sell”。
             // 执行完后的数量
-            position_size: '{{strategy.position_size}}',
-            prev_market_position_size: '{{strategy.prev_market_position_size}} ',
+            position_size: '{{strategy.position_size}}', //返回Pine中相同关键字的值，即当前位置的大小。如果没有持仓，返回0。如果是多头持仓，返回正数。如果是空头持仓，返回负数。
+            market_position_size: '{{strategy.market_position_size}}', //以绝对值（即非负数）的形式返回当前仓位的大小。
+            prev_market_position_size: '{{strategy.prev_market_position_size}}', //以绝对值（即非负数）的形式返回前一个仓位的大小。
             // 交易数量
             contracts: '{{strategy.order.contracts}}',
             // 交易价格
@@ -62,6 +63,8 @@ module.exports = {
             lever: 20,
             // 注释
             comment: '{{strategy.order.comment}}',
+            // time
+            timenow: '{{timenow}}',
             // 安全模式 - 持仓数量
             safePositionSymbol: true,
         },
