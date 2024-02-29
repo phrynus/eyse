@@ -26,7 +26,18 @@ module.exports = async function () {
                     .then((result) => {
                         logger.trace(`[${value.name}] - ${result}`);
                         if (config.safeDouble) {
-                            value.newBin.req('POST', '/fapi/v1/positionSide/dual', { dualSidePosition: 'true' }, true);
+                            value.newBin.req('GET', '/fapi/v1/positionSide/dual', {}, true).then((res) => {
+                                logger.trace(`[${value.name}] - 可用账户余额: ${res}`);
+                                if (res.dualSidePosition == 'false') {
+                                    value.newBin.req('POST', '/fapi/v1/positionSide/dual', { dualSidePosition: 'true' }, true).catch(() => {
+                                        logger.error(`[${value.name}] - 双向持仓模式设置失败`);
+                                    }).then((res) => {
+                                        logger.trace(`[${value.name}] - 双向持仓模式设置: ${res}`);
+                                    });
+                                }
+                            }).catch(() => { 
+                                logger.error(`[${value.name}] - 模式获取`);
+                            });
                         }
                     });
             }
@@ -34,8 +45,8 @@ module.exports = async function () {
         if (Object.keys(config.key).length === 0) {
             throw new Error('No key');
         }
-        config.tv.model.tokens = Object.keys(config.key);
+        config.tv.tokens = Object.keys(config.key);
     } catch (error) {
-        throw new Error(error);
+        throw error;
     }
 };

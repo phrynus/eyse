@@ -33,7 +33,7 @@ pm2 start bot.js
 
 ```json
 {
-    "tokens": ["27a44cec4fb3832072bf1bded571d59b"],
+    "tokens": ["00000000000000000000000000000000"],
     "ticker": "{{ticker}}",
     "market_position": "{{strategy.market_position}}",
     "prev_market_position": "{{strategy.prev_market_position}}",
@@ -57,13 +57,14 @@ pm2 start bot.js
 {
     "tokens": ["00000000000000000000000000000000"],
     "position": "LONG,SHORT",
-    "action": "BUY,SELL,CLOSE,OPEN",
+    "action": "ADD,CUT,CLOSE,OPEN",
     "quantity": "0.1",
     "price": "2000",
     "type": "MARKET",
-    "lever": 20,
+    "lever": 20
 }
 ```
+
 ##### 自定义请求 `POST` `/tv/custom`
 
 ```json

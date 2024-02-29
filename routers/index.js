@@ -1,34 +1,25 @@
-const express = require('express');
-const views = require('./views');
+const config = require('../config');
+const logger = require('../lib/logger');
+const Koa = require('koa');
+const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
+const koaIp = require('koa-ip');
+// 引入tv模块
 const tv = require('./tv');
-const database = require('./db');
-
-const router = express();
-
-router.get('/', (req, res) => {
-    res.redirect('/v');
+// 创建本身:
+const app = new Koa();
+const router = new Router();
+// 处理数据
+app.use(bodyParser());
+app.use(koaIp(config.whitelist));
+// 访问日志
+app.use(async (ctx, next) => {
+    ctx.getIp = (ctx.get('X-Forwarded-For') || ctx.get('x-real-ip') || ctx.ip).replace(/:\d+$/, '');
+    logger.info(`[WEB][${ctx.getIp}][${ctx.request.url}] > ${JSON.stringify(ctx.request.body)}`);
+    await next();
 });
-
-router.use('/v', views);
-
-router.use('/db', database);
-database.use((req, res, next) => {
-    var xForwardedFor = (req.get('X-Forwarded-For') || '').replace(/:\d+$/, '');
-    var ip = xForwardedFor || req.ip;
-    if (config.tv.whiteList.indexOf(ip) === -1) {
-        return res.status(403).json({ message: 'Forbidden' });
-    }
-    next();
-});
-router.use('/tv', tv);
-tv.use((req, res, next) => {
-    var xForwardedFor = (req.get('X-Forwarded-For') || '').replace(/:\d+$/, '');
-    var ip = xForwardedFor || req.ip;
-    if (config.tv.whiteList.indexOf(ip) === -1) {
-        logger.warn('[IP]', ip);
-        return res.status(403).json({ message: 'Forbidden' });
-    }
-    next();
-});
-
-module.exports = router;
+// 设置路由
+router.use('/tv', tv.routes(), tv.allowedMethods());
+app.use(router.routes());
+// app.listen(3001);
+module.exports = app;

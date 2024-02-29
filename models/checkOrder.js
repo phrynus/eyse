@@ -3,10 +3,25 @@ const logger = require('../lib/logger');
 module.exports = async function checkOrder(params, bin) {
     try {
         // 解构订单信息对象
-        const { uuid, ticker, prev_market_position, market_position, action, position_size, prev_market_position_size, contracts, price, type = 'MARKET', timeInForce = 'GTC', lever = 20, comment = '', safePositionSymbol = true } = params;
+        const {
+            ticker,
+            prev_market_position,
+            market_position,
+            action,
+            position_size,
+            market_position_size,
+            prev_market_position_size,
+            contracts,
+            price,
+            type = 'MARKET',
+            timeInForce = 'GTC',
+            lever = 20,
+            comment = '',
+            safePositionSymbol = true,
+        } = params;
 
         // 如果关键参数缺失，则抛出参数错误异常
-        if (!ticker || !market_position || !contracts || !position_size || !prev_market_position_size || !price || !action || !ticker.split('.')[0]) {
+        if (!ticker || !market_position || !contracts || !position_size || !market_position_size || !prev_market_position_size || !price || !action || !ticker.split('.')[0]) {
             throw 'Parameter error';
         }
         // 取交易币
@@ -52,28 +67,31 @@ module.exports = async function checkOrder(params, bin) {
         }
 
         let tradeType;
-        // 头单
-        if (params.prev_market_position === 'flat') {
-            // 设置杠杆
-            bin.newBin.req('GET', '/fapi/v1/leverage', { symbol: coin, leverage: lever }, true).catch((err) => {
-                logger.warn('[checkOrder][调整杠杆失败]', err);
+        // 设置杠杆
+        bin.newBin.req('POST', '/fapi/v1/leverage', { symbol: coin, leverage: lever }, true).catch((err) => {
+            logger.trace('[checkOrder][调整杠杆失败]', err);
+        });
+        // 开单之前调整保证金模式
+        if (config.safeFullWarehouse) {
+            bin.newBin.req('POST', '/fapi/v1/marginType', { symbol: coin, marginType: 'CROSSED' }, true).catch((err) => {
+                logger.trace('[checkOrder][调整保证金模式失败]', err);
             });
-            // 开单之前调整保证金模式
-            if (config.safeFullWarehouse) {
-                bin.newBin.req('GET', '/fapi/v1/marginType', { symbol: coin, marginType: 'CROSSED' }, true).catch((err) => {
-                    logger.warn('[checkOrder][调整保证金模式失败]', err);
-                });
-            }
         }
+
         if (params.market_position === 'long') {
             // 多单
             if (params.prev_market_position === 'flat' && params.action === 'buy') {
                 tradeType = '多开单';
-            } else if (params.prev_market_position === 'short' && params.action === 'sell') {
+            } else if (params.prev_market_position === 'short' && params.action === 'buy') {
                 tradeType = '空转多';
-                await bin.newBin.req('POST', '/fapi/v1/order', { symbol: coin, type: 'STOP_MARKET', stopprice: exchangeInfoSymbol.filters[0].minPrice, side: 'BUY', closePosition: 'true' }, true).catch((err) => {
-                    logger.warn('[checkOrder][平仓失败]', err);
-                    throw { msg: '平仓失败', err };
+                // bin_params.quantity = Number(market_position_size).toFixed(exchangeInfoSymbol.quantityPrecision);
+                await bin.newBin.req('POST', '/fapi/v1/order', { symbol: coin, type: 'MARKET', positionSide: 'SHORT', quantity: exchangeInfoSymbol.filters[2].maxQty, side: 'BUY' }, true).catch((err) => {
+                    if (err.code == -2022) {
+                        logger.info('[checkOrder][多转空][没单平个鸡毛]', err);
+                    } else {
+                        logger.warn('[checkOrder][多转空][平仓失败]', err);
+                        throw err;
+                    }
                 });
             } else if (params.market_position_size > params.prev_market_position_size) {
                 tradeType = '多加仓';
@@ -87,11 +105,16 @@ module.exports = async function checkOrder(params, bin) {
             // 空单
             if (params.prev_market_position === 'flat' && params.action === 'sell') {
                 tradeType = '空开单';
-            } else if (params.prev_market_position === 'long' && params.action === 'buy') {
+            } else if (params.prev_market_position === 'long' && params.action === 'sell') {
                 tradeType = '多转空';
-                await bin.newBin.req('POST', '/fapi/v1/order/test', { symbol: coin, type: 'STOP_MARKET', stopprice: exchangeInfoSymbol.filters[0].minPrice, side: 'SELL', closePosition: 'true' }, true).catch((err) => {
-                    logger.warn('[checkOrder][平仓失败]', err);
-                    throw { msg: '平仓失败', err };
+                // bin_params.quantity = Number(market_position_size).toFixed(exchangeInfoSymbol.quantityPrecision);
+                await bin.newBin.req('POST', '/fapi/v1/order', { symbol: coin, type: 'MARKET', positionSide: 'LONG', quantity: exchangeInfoSymbol.filters[2].maxQty, side: 'SELL' }, true).catch((err) => {
+                    if (err.code == -2022) {
+                        logger.info('[checkOrder][多转空][没单平个鸡毛]', err);
+                    } else {
+                        logger.warn('[checkOrder][多转空][平仓失败]', err);
+                        throw err;
+                    }
                 });
             } else if (params.market_position_size > params.prev_market_position_size) {
                 tradeType = '空加仓';
@@ -105,11 +128,8 @@ module.exports = async function checkOrder(params, bin) {
                 tradeType = '空平单';
             }
         }
-        return { bin_params, tradeType, comment };
+        return { bin_params, tradeType, comment, coin };
     } catch (err) {
-        logger.error('[checkOrder]', err);
-        throw {
-            err,
-        };
+        throw err;
     }
 };
