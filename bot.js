@@ -14,7 +14,7 @@ const models = require('./models');
             throw error;
         });
         // 启动服务
-        routers.listen(config.express.port, () => {
+        routers.listen(config.port, () => {
             logger.trace(`[交易所] ${Object.keys(config.bin)}`);
             logger.trace(`[账户] ${Object.keys(config.key)}`);
             logger.trace(`[TV] ${JSON.stringify(config.tv.model)}`);
