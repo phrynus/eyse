@@ -68,7 +68,7 @@ tv.post('/', async (ctx) => {
             logger.trace('[TV]', `[${newTvModel._id}]`, '写入数据库');
 
             // 解构订单信息对象
-            const { bin_params, tradeType, comment, coin, err } = await models.CheckOrder(params, bin).catch((err) => {
+            const { bin_params, tradeType, comment, coin, err } = await models.CheckOrderTv(params, bin).catch((err) => {
                 results.push(err);
                 ctx.status = 300;
 
@@ -107,16 +107,65 @@ tv.post('/', async (ctx) => {
 });
 tv.post('/order', async (ctx) => {
     try {
-        const { tokens, position, action, quantity, price, type = 'MARKET', lever = 20 } = { ...ctx.request.body };
+        const params = { ...ctx.request.body };
+        const results = [];
+
         if (ctx.isIp == -1) {
             throw Error('非法IP');
-        } else if (tokens === undefined || position === undefined || action === undefined || quantity === undefined) {
-            throw Error('body is undefined');
+        } else if (params.tokens === undefined) {
+            throw Error('tokens is undefined');
         }
-        // 请求参数
-        ctx.body = 'ok';
+
+        for (const token of params.tokens) {
+            // 获取交易所
+            const bin = config.key[token];
+            if (bin === undefined) {
+                results.push('No key');
+                // 跳过循环
+                continue;
+            }
+            // 写入数据库
+            const newTvModel = await new tvModel({
+                name: bin.name,
+                token,
+                tradeType: null,
+                comment: '手动交易',
+                params,
+                bin_params: {},
+                bin_result: {},
+                create_at: new Date(),
+                update_at: new Date(),
+            }).save();
+            // 解构订单信息对象
+            const { bin_params, tradeType, err, coin } = await models.CheckOrder(params, bin).catch((err) => {
+                results.push(err);
+                ctx.status = 300;
+                return err;
+            });
+
+            if (ctx.status == 300) {
+                continue;
+            }
+            // 请求
+            const bin_result = await bin.newBin.req('POST', '/fapi/v1/order', bin_params, true).catch((err) => {
+                ctx.status = 300;
+                return err;
+            });
+            // 更新数据
+            newTvModel.symbol = coin || '';
+            newTvModel.tradeType = tradeType || '';
+            newTvModel.bin_params = bin_params || err || {};
+            newTvModel.bin_result = bin_result || err || {};
+            newTvModel.update_at = new Date();
+            newTvModel.save();
+
+            logger.info(`[ORDER][${tradeType}]`);
+            // // 返回参数
+            results.push(bin_result);
+        }
+        ctx.body = results;
     } catch (err) {
-        logger.error('[TV]', err);
+        logger.error('[TV][ORDER]', err);
         ctx.status = 400;
         ctx.body = {
             msg: err.message,

@@ -17,8 +17,9 @@ const models = require('./models');
         routers.listen(config.port, () => {
             logger.trace(`[交易所] ${Object.keys(config.bin)}`);
             logger.trace(`[账户] ${Object.keys(config.key)}`);
-            logger.trace(`[TV] ${JSON.stringify(config.tv.model)}`);
-            logger.info(`[路由] http://127.0.0.1:${config.express.port}/`);
+            logger.info(`[TV] ${JSON.stringify(config.tv)}`);
+            logger.info(`[TV][ORDER] ${JSON.stringify(config.order)}`);
+            logger.info(`[路由] http://127.0.0.1:${config.port}/`);
         });
     } catch (error) {
         console.log('Server defeat', error);

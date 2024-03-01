@@ -8,12 +8,12 @@ module.exports = {
     safePositionNum: 10,
     // 重复列表
     safeRepeatList: [],
-    // 调整为满仓
+    // 调整为全仓
     safeFullWarehouse: true,
     // 调整成双向
     safeDouble: true,
     // 数据库
-    mongoose: 'mongodb://',
+    mongoose: 'mongodb://nbot:ZDhB3Jn2aDFYxXGE@103.143.72.237:27017/nbot',
     port: 3000,
     key: [
         {
@@ -37,7 +37,7 @@ module.exports = {
     },
     tv: {
         // UUID 数组
-        tokens: ['00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000'],
+        tokens: ['00000000000000000000000000000000', '00000000000000000000000000000000'],
         // 交易所：交易品种
         ticker: '{{ticker}}',
         // 持仓方向 LONG SHORT
@@ -64,11 +64,25 @@ module.exports = {
         // 安全模式 - 持仓数量
         safePositionSymbol: true,
     },
+    order: {
+        tokens: ['00000000000000000000000000000000'],
+        symbol: 'BTCUSDT',
+        position: 'LONG,SHORT',
+        action: 'ADD,CUT,CLOSE,OPEN',
+        quantity: '0.1',
+        // 市价可不填
+        price: '2000',
+        // 默认值 MARKET（可修改）， MARKET 市价 ； LIMIT 限价
+        type: 'MARKET',
+        // 默认值 20（可修改）
+        lever: 20,
+        // 默认值 true（可修改）
+        safePositionSymbol: true,
+    },
     whitelist: [
         '::ffff:127.0.0.1',
         '::ffff:-1',
         '127.0.0.1',
-        '38.150.12.84',
         // TV的IP
         '52.89.214.238',
         '34.212.75.30',
