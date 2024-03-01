@@ -19,6 +19,7 @@ module.exports = async function (params, bin) {
             comment = '',
             safePositionSymbol = true,
         } = params;
+        logger.trace('[checkOrder][开始处理参数]', params);
 
         // 如果关键参数缺失，则抛出参数错误异常
         if (!ticker || !market_position || !contracts || !position_size || !market_position_size || !prev_market_position_size || !price || !action || !ticker.split('.')[0]) {
@@ -87,7 +88,7 @@ module.exports = async function (params, bin) {
                 }
             } else if (params.prev_market_position === 'short' && params.action === 'buy') {
                 tradeType = '空转多';
-                bin_params.quantity = Number(position_size).toFixed(exchangeInfoSymbol.quantityPrecision);
+                bin_params.quantity = Number(Math.abs(position_size)).toFixed(exchangeInfoSymbol.quantityPrecision);
                 await bin.newBin.req('POST', '/fapi/v1/order', { symbol: coin, type: 'MARKET', positionSide: 'SHORT', quantity: exchangeInfoSymbol.filters[2].maxQty, side: 'BUY' }, true).catch((err) => {
                     if (err.code == -2022) {
                         logger.info('[checkOrder][多转空][没单平个鸡毛]', err);
@@ -111,7 +112,7 @@ module.exports = async function (params, bin) {
                 }
             } else if (params.prev_market_position === 'long' && params.action === 'sell') {
                 tradeType = '多转空';
-                bin_params.quantity = Number(position_size).toFixed(exchangeInfoSymbol.quantityPrecision);
+                bin_params.quantity = Number(Math.abs(position_size)).toFixed(exchangeInfoSymbol.quantityPrecision);
                 await bin.newBin.req('POST', '/fapi/v1/order', { symbol: coin, type: 'MARKET', positionSide: 'LONG', quantity: exchangeInfoSymbol.filters[2].maxQty, side: 'SELL' }, true).catch((err) => {
                     if (err.code == -2022) {
                         logger.info('[checkOrder][多转空][没单平个鸡毛]', err);
@@ -134,6 +135,7 @@ module.exports = async function (params, bin) {
                 tradeType = '空平单';
             }
         }
+        logger.trace('[checkOrder][参数处理完成]', bin_params, tradeType, coin);
 
         return { bin_params, tradeType, comment, coin };
     } catch (err) {
