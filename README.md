@@ -58,12 +58,14 @@ pm2 start bot.js
 ```json
 {
     "tokens": ["00000000000000000000000000000000"],
+    "symbol": "BTCUSDT",
     "position": "LONG,SHORT",
     "action": "ADD,CUT,CLOSE,OPEN",
     "quantity": "0.1",
-    "price": "2000",
-    "type": "MARKET",
-    "lever": 20
+    "price": "2000", // 市价情况下可不填
+    "type": "MARKET", // 默认MARKET
+    "lever": 20, // 默认20
+    "safePositionSymbol": true
 }
 ```
 
