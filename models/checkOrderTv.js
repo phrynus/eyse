@@ -42,16 +42,6 @@ module.exports = async function (params, bin) {
         if (minPrice > Number(price) || maxPrice < Number(price)) {
             throw { msg: 'Parameter Price error contracts', symbols: exchangeInfoSymbol };
         }
-        if (!config.safePositionSymbol.includes(coin) && safePositionSymbol == true) {
-            const response = await bin.newBin.req('GET', '/fapi/v2/account', {}, true).catch((err) => {
-                throw { msg: '账户信息获取失败', err };
-            });
-            let positionList = response.positions.filter((pos) => Number(pos.positionInitialMargin) > 0);
-            if (positionList.length >= config.safePositionNum) {
-                throw { msg: '大于限制币数', positionlist };
-            }
-            logger.trace('[checkOrder][持仓详情]', positionList);
-        }
 
         const bin_params = {
             symbol: coin,
@@ -74,7 +64,7 @@ module.exports = async function (params, bin) {
             logger.trace('[checkOrder][调整杠杆失败]', err);
         });
         // 开单之前调整保证金模式
-        if (config.safeFullWarehouse) {
+        if (bin.safe_full) {
             bin.newBin.req('POST', '/fapi/v1/marginType', { symbol: coin, marginType: 'CROSSED' }, true).catch((err) => {
                 logger.trace('[checkOrder][调整保证金模式失败]', err);
             });
@@ -85,6 +75,16 @@ module.exports = async function (params, bin) {
             if (params.prev_market_position === 'flat') {
                 if (params.action === 'buy') {
                     tradeType = '多开单';
+                    if (!bin.safe_symbol.includes(coin) && safePositionSymbol == true) {
+                        const response = await bin.newBin.req('GET', '/fapi/v2/account', {}, true).catch((err) => {
+                            throw { msg: '账户信息获取失败', err };
+                        });
+                        let positionList = response.positions.filter((pos) => Number(pos.positionInitialMargin) > 0);
+                        if (positionList.length >= bin.safe_num) {
+                            throw { msg: '大于限制币数', positionlist };
+                        }
+                        logger.trace('[checkOrder][持仓详情]', positionList);
+                    }
                 }
             } else if (params.prev_market_position === 'short' && params.action === 'buy') {
                 tradeType = '空转多';
@@ -109,6 +109,16 @@ module.exports = async function (params, bin) {
             if (params.prev_market_position === 'flat') {
                 if (params.action === 'sell') {
                     tradeType = '空开单';
+                    if (!bin.safe_symbol.includes(coin) && safePositionSymbol == true) {
+                        const response = await bin.newBin.req('GET', '/fapi/v2/account', {}, true).catch((err) => {
+                            throw { msg: '账户信息获取失败', err };
+                        });
+                        let positionList = response.positions.filter((pos) => Number(pos.positionInitialMargin) > 0);
+                        if (positionList.length >= bin.safe_num) {
+                            throw { msg: '大于限制币数', positionlist };
+                        }
+                        logger.trace('[checkOrder][持仓详情]', positionList);
+                    }
                 }
             } else if (params.prev_market_position === 'long' && params.action === 'sell') {
                 tradeType = '多转空';
