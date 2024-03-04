@@ -8,25 +8,25 @@ const getToken = require('./getToken');
 module.exports = async function () {
     try {
         // 初始化交易所数据
-        for (const [key, value] of Object.entries(config.bin)) {
-            // 交易所时间
-            await axios(`${value.baseUrl + value.timeUrl}`)
-                .then((res) => {
-                    value.timeOffset = res.data.serverTime - Date.now();
-                })
-                .catch((err) => {
-                    throw err.response?.data || err.message;
-                });
+        // for (const [key, value] of Object.entries(config.bin)) {
+        //     // 交易所时间
+        //     await axios(`${value.baseUrl + value.timeUrl}`)
+        //         .then((res) => {
+        //             value.timeOffset = res.data.serverTime - Date.now();
+        //         })
+        //         .catch((err) => {
+        //             throw err.response?.data || err.message;
+        //         });
 
-            // 交易所参数
-            await axios(`${value.baseUrl + value.exchangeInfoUrl}`)
-                .then((res) => {
-                    value.exchangeInfo = res.data || {};
-                })
-                .catch((err) => {
-                    throw err.response?.data || err.message;
-                });
-        }
+        //     // 交易所参数
+        //     await axios(`${value.baseUrl + value.exchangeInfoUrl}`)
+        //         .then((res) => {
+        //             value.exchangeInfo = res.data || {};
+        //         })
+        //         .catch((err) => {
+        //             throw err.response?.data || err.message;
+        //         });
+        // }
         // 取KEy
         const keyModelNum = await db.KeyModel.find().count();
         let keys = [];

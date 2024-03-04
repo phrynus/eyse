@@ -25,6 +25,7 @@ keyRouter.post('/add', async (ctx) => {
             ctx.body = 'KEY已存在';
             return;
         }
+        const seeId = getToken(key, secret, new Date().getTime());
 
         const existingKey = await db
             .KeyModel({
@@ -32,6 +33,7 @@ keyRouter.post('/add', async (ctx) => {
                 exchange,
                 key,
                 token,
+                seeId,
                 secret,
                 safe_num,
                 safe_symbol,
